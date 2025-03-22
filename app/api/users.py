@@ -27,4 +27,3 @@ async def login_user(email: str, password: str):
         timedelta(hours=12)
     )
     return {"message": "Logged in successfully", "access_token": token, "token_type": "Bearer"}
-    

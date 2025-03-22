@@ -12,4 +12,3 @@ database = client[DB_NAME]
 
 users_collection = database["users"]
 tasks_collection = database["tasks"]
-        
