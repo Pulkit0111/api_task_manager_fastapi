@@ -77,3 +77,30 @@ async def delete_task(task_id: str, current_user: dict = Depends(get_current_use
         return {"message": "Task deleted successfully"}
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error))
+
+@router.patch("/{task_id}")
+async def toggle_task_status(task_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        task = await tasks_collection.find_one({
+            "_id": ObjectId(task_id),
+            "created_by": current_user["user_id"]
+        })
+
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        # Toggle the status field
+        new_status = not task["completed"]
+        
+        await tasks_collection.update_one(
+            {
+                "_id": ObjectId(task_id),
+                "created_by": current_user["user_id"]
+            },
+            {"$set": {"completed": new_status}}
+        )
+
+        return {"message": f"Task status updated successfully to {'completed' if new_status else 'pending'}"}
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
