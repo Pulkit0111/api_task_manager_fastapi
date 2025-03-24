@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from app.models.user import User
 from app.core.security import hash_password, verify_password, create_jwt_token
 from app.core.database import users_collection
 from datetime import timedelta
+from app.core.auth import authenticate_user
 
 router = APIRouter()
 
@@ -20,16 +22,5 @@ async def register_user(user: User):
         raise HTTPException(status_code=400, detail=str(error))
 
 @router.post("/login")
-async def login_user(email: str, password: str):
-    try: 
-        user = await users_collection.find_one({"email": email})
-        if not user or not verify_password(password, user["password"]):
-            raise HTTPException(status_code=400, detail="Invalid credentials")
-    
-        token = create_jwt_token(
-            {"user_id": str(user["_id"]), "email": user["email"]},
-            timedelta(hours=12)
-        )
-        return {"message": f"Logged in successfully as {user['name']}", "access_token": token, "token_type": "Bearer"}
-    except Exception as error:
-        raise HTTPException(status_code=400, detail=str(error))
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    return await authenticate_user(form_data)
