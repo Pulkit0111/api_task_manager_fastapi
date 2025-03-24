@@ -15,21 +15,21 @@ async def register_user(user: User):
     
         user.password = hash_password(user.password)
         await users_collection.insert_one(user.dict())
-        return {"message": "User registered successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"message": f"User {user.name} registered successfully"}
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=str(error))
 
 @router.post("/login")
 async def login_user(email: str, password: str):
     try: 
         user = await users_collection.find_one({"email": email})
         if not user or not verify_password(password, user["password"]):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(status_code=400, detail="Invalid credentials")
     
         token = create_jwt_token(
-            {"sub": user["email"]},
+            {"user_id": str(user["_id"]), "email": user["email"]},
             timedelta(hours=12)
         )
-        return {"message": "Logged in successfully", "access_token": token, "token_type": "Bearer"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"message": f"Logged in successfully as {user['name']}", "access_token": token, "token_type": "Bearer"}
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=str(error))
